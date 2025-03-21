@@ -1,0 +1,14 @@
+{
+  "builds": [
+    {
+      "src": "websocketvef/main.go",
+      "use": "@vercel/go"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/websocketvef/main"
+    }
+  ]
+}

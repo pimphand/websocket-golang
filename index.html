@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Notification</title>
+</head>
+
+<body>
+    <h1>Notifications</h1>
+    <ul id="notifications"></ul>
+
+    <script>
+        const ws = new WebSocket("ws://websocket-tawny.vercel.app/ws");
+
+        ws.onopen = function () {
+
+            // Kirim permintaan untuk berlangganan channel tertentu
+            ws.send(JSON.stringify({ channel: "private-news" }));
+        };
+
+        ws.onmessage = function (event) {
+            const data = JSON.parse(event.data);
+        };
+
+        ws.onerror = function (error) {
+
+        };
+    </script>
+
+
+</body>
+
+</html>
