@@ -97,5 +97,5 @@ func main() {
 	r.Use(func(c *gin.Context) { c.Writer.Header().Set("Access-Control-Allow-Origin", "*") })
 	r.POST("/notification", authenticate, sendNotification)
 	r.GET("/ws", handleWebSocket)
-	r.Run(":3000")
+	r.Run(":3003")
 }
