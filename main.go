@@ -41,7 +41,7 @@ type Notification struct {
 
 func initDB() {
 	var err error
-	dbConn, err = sql.Open("postgres", "host=localhost port=3004 user=postgres password='' dbname=notifikasi sslmode=disable")
+	dbConn, err = sql.Open("postgres", "host=localhost port=5432 user=sammy password='password' dbname=notifikasi sslmode=disable")
 	if err != nil {
 		log.Fatal("DB connect error:", err)
 	}
