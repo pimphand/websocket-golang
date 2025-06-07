@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
@@ -41,7 +43,13 @@ type Notification struct {
 
 func initDB() {
 	var err error
-	dbConn, err = sql.Open("postgres", "host=localhost port=3004 user=postgres password='' dbname=notifikasi sslmode=disable")
+	dbConn, err = sql.Open("postgres", 
+		"host=" + os.Getenv("DB_HOST") +
+		" port=" + os.Getenv("DB_PORT") +
+		" user=" + os.Getenv("DB_USER") +
+		" password=" + os.Getenv("DB_PASSWORD") +
+		" dbname=" + os.Getenv("DB_NAME") +
+		" sslmode=" + os.Getenv("DB_SSLMODE"))
 	if err != nil {
 		log.Fatal("DB connect error:", err)
 	}
@@ -391,6 +399,7 @@ func getNotifications(c *gin.Context) {
 // ------------------ MAIN ------------------
 
 func main() {
+	godotenv.Load()
 	initDB()
 
 	r := gin.Default()
