@@ -256,6 +256,6 @@ func main() {
 	r.GET("/ws", handleWebSocket)
 	r.POST("/search", authenticate, searchHandler)
 
-	log.Println("Server started on :3003")
-	r.Run(":3003")
+	log.Println("Server started on :3000")
+	r.Run(":3000")
 }
