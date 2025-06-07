@@ -52,26 +52,53 @@ func initDB() {
 }
 
 // Create table if not exists
-func ensureTable(channel string) error {
-	query := `
-	CREATE TABLE IF NOT EXISTS ` + channel + ` (
-		id SERIAL PRIMARY KEY,
-		sender TEXT,
-		message TEXT,
-		created_at TIMESTAMP DEFAULT NOW()
-	);`
+func ensureTable(channel string, data map[string]interface{}) error {
+	// Base columns
+	columns := []string{
+		"id SERIAL PRIMARY KEY",
+		"created_at TIMESTAMP DEFAULT NOW()",
+	}
+	
+	// Add dynamic columns based on data
+	for field := range data {
+		if field != "id" && field != "created_at" {
+			columns = append(columns, field+" TEXT")
+		}
+	}
+	
+	query := `CREATE TABLE IF NOT EXISTS ` + channel + ` (` + strings.Join(columns, ", ") + `);`
 	_, err := dbConn.Exec(query)
 	return err
 }
 
 // Save notif to table
 func saveToDB(channel string, data map[string]interface{}) error {
-	if err := ensureTable(channel); err != nil {
+	if err := ensureTable(channel, data); err != nil {
 		return err
 	}
 
-	stmt := `INSERT INTO ` + channel + ` (sender, message, created_at) VALUES ($1, $2, $3)`
-	_, err := dbConn.Exec(stmt, data["sender"], data["message"], time.Now())
+	// Build dynamic query
+	fields := []string{}
+	placeholders := []string{}
+	values := []interface{}{}
+	valueIndex := 1
+
+	for field, value := range data {
+		if field != "id" && field != "created_at" {
+			fields = append(fields, field)
+			placeholders = append(placeholders, "$"+strconv.Itoa(valueIndex))
+			values = append(values, value)
+			valueIndex++
+		}
+	}
+
+	// Add created_at
+	fields = append(fields, "created_at")
+	placeholders = append(placeholders, "$"+strconv.Itoa(valueIndex))
+	values = append(values, time.Now())
+
+	stmt := `INSERT INTO ` + channel + ` (` + strings.Join(fields, ", ") + `) VALUES (` + strings.Join(placeholders, ", ") + `)`
+	_, err := dbConn.Exec(stmt, values...)
 	return err
 }
 
