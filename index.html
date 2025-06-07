@@ -12,16 +12,20 @@
     <ul id="notifications"></ul>
 
     <script>
-        const ws = new WebSocket("ws://websocket-tawny.vercel.app/ws");
+        const ws = new WebSocket("ws://localhost:3003/ws");
 
         ws.onopen = function () {
 
             // Kirim permintaan untuk berlangganan channel tertentu
-            ws.send(JSON.stringify({ channel: "private-news" }));
+            ws.send(JSON.stringify({ channel: "notifikasi" }));
         };
 
         ws.onmessage = function (event) {
             const data = JSON.parse(event.data);
+            const ul = document.getElementById("notifications");
+            const li = document.createElement("li");
+            li.textContent = `[${data.event}] ${data.data.sender}: ${data.data.message}`;
+            ul.prepend(li);
         };
 
         ws.onerror = function (error) {
