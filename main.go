@@ -411,6 +411,5 @@ func main() {
 	r.GET("/search", authenticate, searchHandler)
 	r.GET("/notifications", authenticate, getNotifications)
 
-	log.Println("Server started on :3000")
 	r.Run(":3000")
 }

@@ -12,24 +12,41 @@
     <ul id="notifications"></ul>
 
     <script>
-        const ws = new WebSocket("https://websocket.dmpt.my.id/ws");
+        const ws = new WebSocket("ws://localhost:3000/ws");
 
         ws.onopen = function () {
 
             // Kirim permintaan untuk berlangganan channel tertentu
-            ws.send(JSON.stringify({ channel: "notifikasi" }));
+            ws.send(JSON.stringify({ channel: "new_order" }));
         };
 
         ws.onmessage = function (event) {
             const data = JSON.parse(event.data);
+
+            // Skip if event is undefined
+            if (!data.event) {
+                return;
+            }
+
             const ul = document.getElementById("notifications");
             const li = document.createElement("li");
-            li.textContent = `[${data.event}] ${data.data.sender}: ${data.data.message}`;
+
+            // Format the message based on the notification structure
+            let message = `[${data.event}] `;
+            if (data.data) {
+                // Add all data fields
+                const dataFields = Object.entries(data.data)
+                    .map(([key, value]) => `${key}: ${value}`)
+                    .join(', ');
+                message += dataFields;
+            }
+
+            li.textContent = message;
             ul.prepend(li);
         };
 
         ws.onerror = function (error) {
-
+            console.error('WebSocket error:', error);
         };
     </script>
 
