@@ -22,6 +22,7 @@ var (
 		"secret": "secret",
 	}
 	dbConn *sql.DB
+	useDB  bool // Flag to indicate if database is available
 
 	clients = make(map[*websocket.Conn]string)
 	msgLock sync.Mutex
@@ -42,25 +43,51 @@ type Notification struct {
 // ------------------ DB Setup ------------------
 
 func initDB() {
+	// Check if database environment variables are set
+	dbHost := os.Getenv("DB_HOST")
+	dbPort := os.Getenv("DB_PORT")
+	dbUser := os.Getenv("DB_USER")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbName := os.Getenv("DB_NAME")
+	dbSSLMode := os.Getenv("DB_SSLMODE")
+
+	// If any required database variable is missing, skip database initialization
+	if dbHost == "" || dbPort == "" || dbUser == "" || dbPassword == "" || dbName == "" {
+		log.Println("Database environment variables not found. Running without database functionality.")
+		useDB = false
+		return
+	}
+
 	var err error
 	dbConn, err = sql.Open("postgres", 
-		"host=" + os.Getenv("DB_HOST") +
-		" port=" + os.Getenv("DB_PORT") +
-		" user=" + os.Getenv("DB_USER") +
-		" password=" + os.Getenv("DB_PASSWORD") +
-		" dbname=" + os.Getenv("DB_NAME") +
-		" sslmode=" + os.Getenv("DB_SSLMODE"))
+		"host=" + dbHost +
+		" port=" + dbPort +
+		" user=" + dbUser +
+		" password=" + dbPassword +
+		" dbname=" + dbName +
+		" sslmode=" + dbSSLMode)
 	if err != nil {
-		log.Fatal("DB connect error:", err)
+		log.Println("DB connect error:", err)
+		useDB = false
+		return
 	}
 
 	if err := dbConn.Ping(); err != nil {
-		log.Fatal("DB ping failed:", err)
+		log.Println("DB ping failed:", err)
+		useDB = false
+		return
 	}
+
+	useDB = true
+	log.Println("Database connected successfully.")
 }
 
 // Create table if not exists
 func ensureTable(channel string, data map[string]interface{}) error {
+	if !useDB {
+		return nil
+	}
+
 	// Base columns
 	columns := []string{
 		"id SERIAL PRIMARY KEY",
@@ -136,6 +163,10 @@ func ensureTable(channel string, data map[string]interface{}) error {
 
 // Save notif to table
 func saveToDB(channel string, data map[string]interface{}, event string) error {
+	if !useDB {
+		return nil
+	}
+
 	if err := ensureTable(channel, data); err != nil {
 		return err
 	}
@@ -220,10 +251,12 @@ func sendNotification(c *gin.Context) {
 		return
 	}
 
-	// Simpan ke DB
-	if err := saveToDB(notif.Channel, notif.Data, notif.Event); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save to DB", "detail": err.Error()})
-		return
+	// Simpan ke DB (jika database tersedia)
+	if useDB {
+		if err := saveToDB(notif.Channel, notif.Data, notif.Event); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save to DB", "detail": err.Error()})
+			return
+		}
 	}
 
 	// Broadcast ke client
@@ -233,6 +266,11 @@ func sendNotification(c *gin.Context) {
 }
 
 func searchHandler(c *gin.Context) {
+	if !useDB {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Database not available"})
+		return
+	}
+
 	var req SearchRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
@@ -334,6 +372,11 @@ func broadcastNotification(notif Notification) {
 }
 
 func getNotifications(c *gin.Context) {
+	if !useDB {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Database not available"})
+		return
+	}
+
 	channel := c.Query("channel")
 	if channel == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Channel is required"})

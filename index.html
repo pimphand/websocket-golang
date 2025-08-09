@@ -4,53 +4,511 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebSocket Notification</title>
+    <title>WebSocket Notification Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .controls {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .control-group input,
+        .control-group select {
+            padding: 8px 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .control-group input:focus,
+        .control-group select:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #4facfe;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #3a8bfe;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .status {
+            padding: 15px 20px;
+            background: #e9ecef;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #dc3545;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.connected {
+            background: #28a745;
+        }
+
+        .notifications-container {
+            padding: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .notification-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+        }
+
+        .notification-item:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .notification-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .timestamp {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .channel {
+            color: #007bff;
+            font-weight: 600;
+        }
+
+        .event {
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .notification-data {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #212529;
+        }
+
+        .notification-data strong {
+            color: #495057;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #495057;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .notification-item {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .control-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .status {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
 </head>
 
 <body>
-    <h1>Notifications</h1>
-    <ul id="notifications"></ul>
+    <div class="container">
+        <div class="header">
+            <h1>🔔 WebSocket Notifications</h1>
+            <p>Real-time notification testing interface</p>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="channel">Channel:</label>
+                <select id="channel">
+                    <option value="new_order">new_order</option>
+                    <option value="payment">payment</option>
+                    <option value="chat">chat</option>
+                    <option value="system">system</option>
+                    <option value="user_activity">user_activity</option>
+                    <option value="inventory">inventory</option>
+                    <option value="marketing">marketing</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="serverUrl">Server URL:</label>
+                <input type="text" id="serverUrl" value="ws://localhost:3000/ws" placeholder="ws://localhost:3000/ws">
+            </div>
+
+            <button id="connectBtn" class="btn-primary">Connect</button>
+            <button id="disconnectBtn" class="btn-secondary" disabled>Disconnect</button>
+            <button id="clearBtn" class="btn-secondary">Clear Messages</button>
+        </div>
+
+        <div class="status">
+            <div class="status-indicator">
+                <div id="statusDot" class="status-dot"></div>
+                <span id="statusText">Disconnected</span>
+            </div>
+            <div id="messageCount">No messages received</div>
+        </div>
+
+        <div id="notifications" class="notifications-container">
+            <div class="empty-state">
+                <h3>No notifications yet</h3>
+                <p>Connect to a WebSocket server and send notifications to see them appear here.</p>
+                <p><strong>Tip:</strong> Use the test script to send notifications via curl!</p>
+            </div>
+        </div>
+    </div>
 
     <script>
-        const ws = new WebSocket("ws://localhost:3000/ws");
-
-        ws.onopen = function () {
-
-            // Kirim permintaan untuk berlangganan channel tertentu
-            ws.send(JSON.stringify({ channel: "new_order" }));
-        };
-
-        ws.onmessage = function (event) {
-            const data = JSON.parse(event.data);
-
-            // Skip if event is undefined
-            if (!data.event) {
-                return;
+        class WebSocketNotificationClient {
+            constructor() {
+                this.ws = null;
+                this.isConnected = false;
+                this.receivedMessages = [];
+                this.maxMessages = 100;
+                this.initializeElements();
+                this.bindEvents();
             }
 
-            const ul = document.getElementById("notifications");
-            const li = document.createElement("li");
-
-            // Format the message based on the notification structure
-            let message = `[${data.event}] `;
-            if (data.data) {
-                // Add all data fields
-                const dataFields = Object.entries(data.data)
-                    .map(([key, value]) => `${key}: ${value}`)
-                    .join(', ');
-                message += dataFields;
+            initializeElements() {
+                this.connectBtn = document.getElementById('connectBtn');
+                this.disconnectBtn = document.getElementById('disconnectBtn');
+                this.clearBtn = document.getElementById('clearBtn');
+                this.statusDot = document.getElementById('statusDot');
+                this.statusText = document.getElementById('statusText');
+                this.messageCount = document.getElementById('messageCount');
+                this.notificationsContainer = document.getElementById('notifications');
+                this.channelSelect = document.getElementById('channel');
+                this.serverUrlInput = document.getElementById('serverUrl');
             }
 
-            li.textContent = message;
-            ul.prepend(li);
-        };
+            bindEvents() {
+                this.connectBtn.addEventListener('click', () => this.connect());
+                this.disconnectBtn.addEventListener('click', () => this.disconnect());
+                this.clearBtn.addEventListener('click', () => this.clearMessages());
+            }
 
-        ws.onerror = function (error) {
-            console.error('WebSocket error:', error);
-        };
+            connect() {
+                const url = this.serverUrlInput.value.trim();
+                const channel = this.channelSelect.value;
+
+                if (!url) {
+                    alert('Please enter a server URL');
+                    return;
+                }
+
+                console.log(`🔌 Connecting to: ${url}`);
+                this.updateStatus('Connecting...', false);
+
+                this.ws = new WebSocket(url);
+
+                this.ws.onopen = () => {
+                    console.log('✅ WebSocket connected!');
+                    this.isConnected = true;
+                    this.updateStatus('Connected', true);
+                    this.updateButtons(true);
+
+                    // Subscribe to channel
+                    const subscription = { channel: channel };
+                    this.ws.send(JSON.stringify(subscription));
+                    console.log(`📡 Subscribed to channel: ${channel}`);
+                };
+
+                this.ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        this.handleMessage(data);
+                    } catch (error) {
+                        console.error('❌ Error parsing message:', error);
+                    }
+                };
+
+                this.ws.onerror = (error) => {
+                    console.error('❌ WebSocket error:', error);
+                    this.isConnected = false;
+                    this.updateStatus('Connection Error', false);
+                    this.updateButtons(false);
+                };
+
+                this.ws.onclose = () => {
+                    console.log('🔌 WebSocket disconnected');
+                    this.isConnected = false;
+                    this.updateStatus('Disconnected', false);
+                    this.updateButtons(false);
+                };
+            }
+
+            disconnect() {
+                if (this.ws) {
+                    this.ws.close();
+                }
+            }
+
+            handleMessage(data) {
+                // Skip subscription confirmation messages
+                if (data.message && data.message === 'Subscribed to channel') {
+                    console.log(`✅ ${data.message}: ${data.channel}`);
+                    return;
+                }
+
+                // Handle notification messages
+                if (data.event) {
+                    const timestamp = new Date().toLocaleTimeString();
+                    const message = {
+                        timestamp: timestamp,
+                        channel: data.channel,
+                        event: data.event,
+                        data: data.data
+                    };
+
+                    this.receivedMessages.unshift(message);
+
+                    // Keep only last maxMessages
+                    if (this.receivedMessages.length > this.maxMessages) {
+                        this.receivedMessages = this.receivedMessages.slice(0, this.maxMessages);
+                    }
+
+                    this.displayMessage(message);
+                    this.updateMessageCount();
+                }
+            }
+
+            displayMessage(message) {
+                console.log(`📨 [${message.timestamp}] ${message.event}:`, message.data);
+
+                // Remove empty state if it exists
+                const emptyState = this.notificationsContainer.querySelector('.empty-state');
+                if (emptyState) {
+                    emptyState.remove();
+                }
+
+                const messageElement = document.createElement('div');
+                messageElement.className = 'notification-item';
+                messageElement.innerHTML = `
+                    <div class="notification-header">
+                        <div class="notification-meta">
+                            <span class="timestamp">${message.timestamp}</span>
+                            <span class="channel">${message.channel}</span>
+                            <span class="event">${message.event}</span>
+                        </div>
+                    </div>
+                    <div class="notification-data">
+                        ${this.formatData(message.data)}
+                    </div>
+                `;
+
+                this.notificationsContainer.insertBefore(messageElement, this.notificationsContainer.firstChild);
+
+                // Keep only last 20 messages in DOM
+                const items = this.notificationsContainer.querySelectorAll('.notification-item');
+                if (items.length > 20) {
+                    this.notificationsContainer.removeChild(items[items.length - 1]);
+                }
+            }
+
+            formatData(data) {
+                if (!data) return '<em>No data</em>';
+
+                return Object.entries(data)
+                    .map(([key, value]) => `<strong>${key}:</strong> ${value}`)
+                    .join('<br>');
+            }
+
+            updateStatus(text, connected) {
+                this.statusText.textContent = text;
+                this.statusDot.className = `status-dot ${connected ? 'connected' : ''}`;
+            }
+
+            updateButtons(connected) {
+                this.connectBtn.disabled = connected;
+                this.disconnectBtn.disabled = !connected;
+            }
+
+            updateMessageCount() {
+                const count = this.receivedMessages.length;
+                this.messageCount.textContent = `${count} message${count !== 1 ? 's' : ''} received`;
+            }
+
+            clearMessages() {
+                this.receivedMessages = [];
+                this.updateMessageCount();
+
+                // Clear DOM
+                this.notificationsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No notifications yet</h3>
+                        <p>Connect to a WebSocket server and send notifications to see them appear here.</p>
+                        <p><strong>Tip:</strong> Use the test script to send notifications via curl!</p>
+                    </div>
+                `;
+            }
+
+            getMessages() {
+                return this.receivedMessages;
+            }
+        }
+
+        // Initialize the client when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.notificationClient = new WebSocketNotificationClient();
+            console.log('🚀 WebSocket Notification Client initialized');
+            console.log('💡 Use window.notificationClient to interact with the client');
+        });
     </script>
-
-
 </body>
 
 </html>
