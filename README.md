@@ -1,298 +1,157 @@
-# WebSocket Notification System
+# WebSocket Server with Monitoring
 
-A real-time notification system built with Go, WebSocket, and PostgreSQL (optional).
+A real-time WebSocket server built with Go and Gin, featuring comprehensive monitoring capabilities.
 
 ## Features
 
-- 🔔 Real-time WebSocket notifications
-- 🔐 Authentication with key/secret
-- 📊 Dynamic database schema (PostgreSQL)
-- 🔍 Search and filter notifications
-- 📱 Modern web interface
-- 🧪 Comprehensive testing tools
+- **Real-time WebSocket connections** with channel-based messaging
+- **Dynamic database schema** that adapts to your data structure
+- **RESTful API** for sending notifications
+- **Advanced search functionality** with multiple operators
+- **Real-time monitoring dashboard** with beautiful UI
+- **Server metrics tracking** (memory, CPU, uptime)
+- **WebSocket statistics** (connections, messages, success rates)
 
 ## Quick Start
 
-### 1. Start the Server
+1. **Install dependencies:**
+   ```bash
+   go mod tidy
+   ```
 
-```bash
-# Run without database (recommended for testing)
-go run main.go
+2. **Set up environment variables (optional for database):**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your database credentials
+   ```
 
-# Or with database (requires PostgreSQL)
-# Set environment variables first
-export DB_HOST=localhost
-export DB_PORT=5432
-export DB_USER=your_user
-export DB_PASSWORD=your_password
-export DB_NAME=your_database
-export DB_SSLMODE=disable
+3. **Run the server:**
+   ```bash
+   go run main.go
+   ```
 
-go run main.go
-```
-
-The server will start on `http://localhost:3000`
-
-### 2. Open the Web Interface
-
-Open `index.html` in your browser to see the real-time notification interface.
-
-### 3. Test with Curl
-
-Use the provided test script to send notifications:
-
-```bash
-./test_notifications.sh
-```
+4. **Access the monitoring dashboard:**
+   ```
+   http://localhost:3000/monitor
+   ```
 
 ## API Endpoints
 
-### Send Notification
+### WebSocket
+- `GET /ws` - WebSocket connection endpoint
+
+### Notifications
+- `POST /notification` - Send notification (requires authentication)
+- `GET /notifications` - Get notifications from database (requires authentication)
+
+### Search
+- `GET /search` - Advanced search with filters (requires authentication)
+
+### Monitoring
+- `GET /monitor` - Real-time monitoring dashboard
+- `GET /api/metrics` - JSON API for metrics data
+
+## Authentication
+
+All protected endpoints require these headers:
+```
+key: key
+secret: secret
+```
+
+## Monitoring Dashboard
+
+The monitoring dashboard (`/monitor`) provides:
+
+### WebSocket Statistics
+- **Active Connections**: Currently connected WebSocket clients
+- **Total Connections**: Total connections since server start
+- **Success Rate**: Percentage of successful message deliveries
+- **Messages Sent**: Total successful message deliveries
+- **Messages Failed**: Total failed message deliveries
+- **Channel Statistics**: Message count per channel
+
+### Server Metrics
+- **Server Uptime**: How long the server has been running
+- **Memory Usage**: Current memory allocation
+- **Goroutines**: Number of active Go routines
+- **Real-time Updates**: Auto-refreshes every 2 seconds
+
+### Features
+- **Responsive Design**: Works on desktop and mobile
+- **Beautiful UI**: Modern gradient design with glassmorphism effects
+- **Real-time Data**: Live updates without page refresh
+- **Interactive Elements**: Hover effects and smooth animations
+
+## Testing
+
+Run the test script to see the monitoring in action:
+
+```bash
+./test_monitor.sh
+```
+
+This will:
+1. Start the server
+2. Send test notifications
+3. Create WebSocket connections
+4. Open the monitoring dashboard
+
+## Database Support
+
+The server can run with or without a database:
+
+- **With Database**: Full functionality including data persistence and search
+- **Without Database**: WebSocket and notification features only
+
+Set these environment variables for database support:
+```
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=your_user
+DB_PASSWORD=your_password
+DB_NAME=your_database
+DB_SSLMODE=disable
+```
+
+## Example Usage
+
+### Send a notification:
 ```bash
 curl -X POST http://localhost:3000/notification \
   -H "Content-Type: application/json" \
   -H "key: key" \
   -H "secret: secret" \
   -d '{
-    "channel": "new_order",
-    "event": "order_created",
+    "channel": "chat-room-1",
+    "event": "new-message",
     "data": {
-      "message": "New order received",
-      "sender": "customer123",
-      "amount": 150000
+      "message": "Hello World!",
+      "sender": "user123",
+      "timestamp": "2024-01-01T12:00:00Z"
     }
   }'
 ```
 
-### WebSocket Connection
+### Connect to WebSocket:
 ```javascript
-const ws = new WebSocket("ws://localhost:3000/ws");
+const ws = new WebSocket('ws://localhost:3000/ws');
 ws.onopen = () => {
-  ws.send(JSON.stringify({ channel: "new_order" }));
+  ws.send(JSON.stringify({channel: 'chat-room-1'}));
 };
 ws.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  console.log(data);
+  console.log('Received:', JSON.parse(event.data));
 };
 ```
 
-### Search Notifications
-```bash
-curl -X GET "http://localhost:3000/search" \
-  -H "Content-Type: application/json" \
-  -H "key: key" \
-  -H "secret: secret" \
-  -d '{
-    "channel": "new_order",
-    "filters": [
-      {
-        "field": "event",
-        "op": "==",
-        "value": "order_created"
-      }
-    ]
-  }'
-```
+## Architecture
 
-### Get Notifications
-```bash
-curl -X GET "http://localhost:3000/notifications?channel=new_order" \
-  -H "key: key" \
-  -H "secret: secret"
-```
-
-## Authentication
-
-All API endpoints require authentication using headers:
-- `key: key`
-- `secret: secret`
-
-## Database (Optional)
-
-The system can run with or without a PostgreSQL database:
-
-- **Without database**: Notifications are only broadcast via WebSocket
-- **With database**: Notifications are stored and can be searched/retrieved
-
-### Database Setup
-
-1. Install PostgreSQL
-2. Create a database
-3. Set environment variables:
-   ```bash
-   export DB_HOST=localhost
-   export DB_PORT=5432
-   export DB_USER=your_user
-   export DB_PASSWORD=your_password
-   export DB_NAME=your_database
-   export DB_SSLMODE=disable
-   ```
-
-The system will automatically create tables based on the notification data structure.
-
-## Testing
-
-### Automated Tests
-
-```bash
-# Run Go tests
-go test
-
-# Run with verbose output
-go test -v
-
-# Run benchmarks
-go test -bench=.
-```
-
-### Manual Testing
-
-1. **Start the server**: `go run main.go`
-2. **Open index.html** in your browser
-3. **Connect to WebSocket** using the interface
-4. **Send notifications** using the test script: `./test_notifications.sh`
-5. **Watch real-time updates** in the browser
-
-### Test Scenarios
-
-The test script includes various scenarios:
-- 📦 New order notifications
-- 💰 Payment success notifications
-- 💬 Chat messages
-- ⚠️ System alerts
-- 👤 User activity
-- 📦 Inventory updates
-- 📢 Marketing campaigns
-
-## File Structure
-
-```
-websocket-golang/
-├── main.go              # Main server application
-├── main_test.go         # Go tests
-├── index.html           # Web interface
-├── test_notifications.sh # Test script
-├── websocket_test.js    # WebSocket test client
-├── go.mod              # Go dependencies
-├── go.sum              # Go dependencies checksum
-└── README.md           # This file
-```
-
-## Configuration
-
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `DB_HOST` | PostgreSQL host | - |
-| `DB_PORT` | PostgreSQL port | - |
-| `DB_USER` | PostgreSQL user | - |
-| `DB_PASSWORD` | PostgreSQL password | - |
-| `DB_NAME` | PostgreSQL database name | - |
-| `DB_SSLMODE` | PostgreSQL SSL mode | - |
-
-### Authentication
-
-Default credentials:
-- Key: `key`
-- Secret: `secret`
-
-## WebSocket Protocol
-
-### Subscription Message
-```json
-{
-  "channel": "channel_name"
-}
-```
-
-### Notification Message
-```json
-{
-  "channel": "channel_name",
-  "event": "event_type",
-  "data": {
-    "field1": "value1",
-    "field2": "value2"
-  }
-}
-```
-
-## Search Operators
-
-| Operator | SQL Equivalent | Description |
-|----------|----------------|-------------|
-| `==` | `=` | Equal |
-| `!=` | `!=` | Not equal |
-| `>` | `>` | Greater than |
-| `<` | `<` | Less than |
-| `>=` | `>=` | Greater than or equal |
-| `<=` | `<=` | Less than or equal |
-| `like` | `LIKE` | Pattern matching |
-| `ilike` | `ILIKE` | Case-insensitive pattern matching |
-
-## Error Handling
-
-The system handles various error scenarios:
-- Invalid authentication (401 Unauthorized)
-- Invalid JSON (400 Bad Request)
-- Missing required fields (400 Bad Request)
-- Database connection issues (graceful fallback)
-- WebSocket connection errors
-
-## Performance
-
-- Supports multiple concurrent WebSocket connections
-- Efficient message broadcasting
-- Database operations are optional
-- Memory-efficient message storage
-
-## Browser Compatibility
-
-The web interface works with modern browsers that support:
-- WebSocket API
-- ES6+ JavaScript
-- CSS Grid and Flexbox
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Server won't start**
-   - Check if port 3000 is available
-   - Verify Go is installed: `go version`
-
-2. **WebSocket connection fails**
-   - Ensure server is running
-   - Check browser console for errors
-   - Verify WebSocket URL format
-
-3. **Database connection fails**
-   - Check environment variables
-   - Verify PostgreSQL is running
-   - Test connection manually
-
-4. **Notifications not appearing**
-   - Check WebSocket connection status
-   - Verify channel subscription
-   - Check browser console for errors
-
-### Debug Mode
-
-Enable debug logging by setting the environment variable:
-```bash
-export GIN_MODE=debug
-go run main.go
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
+- **Gin**: HTTP framework for REST API
+- **Gorilla WebSocket**: WebSocket implementation
+- **PostgreSQL**: Database (optional)
+- **Real-time Monitoring**: Custom metrics tracking
+- **Responsive UI**: Modern CSS with JavaScript
 
 ## License
 
-This project is open source and available under the MIT License.
+MIT License
